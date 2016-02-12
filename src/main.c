@@ -6,9 +6,11 @@ static TextLayer *s_time_layer;
 // static TextLayer *s_time_layer_seconds;
 static TextLayer *s_time_layer_date;
 static TextLayer *s_battery_layer;
+static TextLayer *s_connection_layer;
 
 static GFont s_time_font;
 
+// Battery status handling
 static void handle_battery(BatteryChargeState charge_state) {
   static char battery_text[] = "100%";
 
@@ -20,6 +22,18 @@ static void handle_battery(BatteryChargeState charge_state) {
   text_layer_set_text(s_battery_layer, battery_text);
 }
 
+// Bluetooth connection status handling
+static void handle_bluetooth(bool connected) {
+  if (connected) {
+      text_layer_set_text_color(s_connection_layer, GColorPictonBlue);
+      text_layer_set_text(s_connection_layer, "Bluetooth: OK");
+  }  else {
+      text_layer_set_text_color(s_connection_layer, GColorRed);
+      text_layer_set_text(s_connection_layer, "Bluetooth: --");
+  }
+}
+
+// Watchface window loading
 static void main_window_load(Window *window) {
   // Get information about the Window
   Layer *window_layer = window_get_root_layer(window);  
@@ -27,7 +41,7 @@ static void main_window_load(Window *window) {
   
   // Create the TextLayer with specific bounds
   s_time_layer = text_layer_create(
-      GRect(0, PBL_IF_ROUND_ELSE(45, 52), bounds.size.w, 60));
+      GRect(0, 45, bounds.size.w, 60));
   
   // Create the TextLayer with specific bounds
   // s_time_layer_seconds = text_layer_create(
@@ -35,12 +49,15 @@ static void main_window_load(Window *window) {
   
     // Create the TextLayer with specific bounds
   s_time_layer_date = text_layer_create(
-      GRect(0, PBL_IF_ROUND_ELSE(105, 105), bounds.size.w, 50));
+      GRect(0, 105, bounds.size.w, 50));
   
   s_battery_layer = text_layer_create(
-      GRect(0, PBL_IF_ROUND_ELSE(120, 120), bounds.size.w, 50));  
+      GRect(0, 120, bounds.size.w, 50));  
   
-  // Improve the layout to be more like a watchface
+  s_connection_layer = text_layer_create(
+      GRect(0, 30, bounds.size.w, 34));
+  
+  // Improve the time layout
   text_layer_set_background_color(s_time_layer, GColorClear);
   text_layer_set_text_color(s_time_layer, GColorYellow);
   text_layer_set_text(s_time_layer, "00:00");
@@ -59,27 +76,35 @@ static void main_window_load(Window *window) {
   // text_layer_set_font(s_time_layer_seconds, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   // text_layer_set_text_alignment(s_time_layer_seconds, GTextAlignmentCenter);
   
-    // Improve the layout to be more like a watchface
+    // Improve the date layout
   text_layer_set_background_color(s_time_layer_date, GColorClear);
   text_layer_set_text_color(s_time_layer_date, GColorOrange);
   text_layer_set_text(s_time_layer_date, "Heute");
   text_layer_set_font(s_time_layer_date, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_time_layer_date, GTextAlignmentCenter);
   
-  s_battery_layer = text_layer_create(GRect(0, 120, bounds.size.w, 34));
   text_layer_set_text_color(s_battery_layer, GColorWhite);
   text_layer_set_background_color(s_battery_layer, GColorClear);
   text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
   text_layer_set_text(s_battery_layer, "100%");  
+
+  
+  text_layer_set_background_color(s_connection_layer, GColorClear);
+  text_layer_set_font(s_connection_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_text_alignment(s_connection_layer, GTextAlignmentCenter);
+  handle_bluetooth(connection_service_peek_pebble_app_connection());
+  
   
   // Add it as a child layer to the Window's root layer
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
   // layer_add_child(window_layer, text_layer_get_layer(s_time_layer_seconds));
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer_date));
   layer_add_child(window_layer, text_layer_get_layer(s_battery_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_connection_layer));
 }
 
+// Update the time and date
 static void update_time() {
   // Get a tm structure
   time_t temp = time(NULL);
@@ -106,12 +131,14 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
 }
 
+// free memory
 static void main_window_unload(Window *window) {
   // Destroy TextLayer
   text_layer_destroy(s_time_layer);
   // text_layer_destroy(s_time_layer_seconds);
   text_layer_destroy(s_time_layer_date);
   text_layer_destroy(s_battery_layer);
+  text_layer_destroy(s_connection_layer);
   fonts_unload_custom_font(s_time_font);
 }
 
@@ -120,7 +147,6 @@ static void init() {
   // Create main Window element and assign to pointer
   s_main_window = window_create();
   window_set_background_color(s_main_window, GColorBlack);
-
 
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(s_main_window, (WindowHandlers) {
