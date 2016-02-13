@@ -1,7 +1,10 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "KEY_CONDITIONS": 1,
+        "KEY_TEMPERATURE": 0
+    },
     "capabilities": [
-        ""
+        "location"
     ],
     "companyName": "removed",
     "enableMultiJS": true,
@@ -32,9 +35,9 @@
     "targetPlatforms": [
         "chalk"
     ],
-    "uuid": "646a3e39-311d-4aec-8fde-f3cde09c238e",
+    "uuid": "e806310e-714d-4c2d-bd4c-d6cfa7dbe4ad",
     "versionLabel": "1.0",
     "watchapp": {
-        "watchface": false
+        "watchface": true
     }
 }

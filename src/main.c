@@ -1,12 +1,24 @@
 #include <pebble.h>
 
 static Window *s_main_window;
+
+// time and date layers
 static TextLayer *s_time_layer;
 // To avoid battery drain seconds are not available
 // static TextLayer *s_time_layer_seconds;
 static TextLayer *s_time_layer_date;
+
+// information layers
 static TextLayer *s_battery_layer;
 static TextLayer *s_connection_layer;
+
+//weather layer
+static TextLayer *s_weather_layer;
+
+enum {
+  KEY_TEMPERATURE = 0,
+  KEY_CONDITIONS
+};
 
 static GFont s_time_font;
 
@@ -47,12 +59,17 @@ static void main_window_load(Window *window) {
   // s_time_layer_seconds = text_layer_create(
   //    GRect(0, PBL_IF_ROUND_ELSE(105, 105), bounds.size.w, 50));
   
-    // Create the TextLayer with specific bounds
+  // Create the TextLayer with specific bounds
   s_time_layer_date = text_layer_create(
       GRect(0, 105, bounds.size.w, 50));
   
+  // Create battery layer 
   s_battery_layer = text_layer_create(
-      GRect(0, 120, bounds.size.w, 50));  
+      GRect(0, 125, bounds.size.w, 50)); 
+  
+  // Create temperature Layer
+  s_weather_layer = text_layer_create(
+      GRect(0, 145, bounds.size.w, 25));
   
   s_connection_layer = text_layer_create(
       GRect(0, 30, bounds.size.w, 34));
@@ -83,18 +100,24 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_time_layer_date, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_time_layer_date, GTextAlignmentCenter);
   
+  // Style the Battery text
   text_layer_set_text_color(s_battery_layer, GColorWhite);
   text_layer_set_background_color(s_battery_layer, GColorClear);
   text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
   text_layer_set_text(s_battery_layer, "100%");  
 
-  
+  // Style the Connection text
   text_layer_set_background_color(s_connection_layer, GColorClear);
   text_layer_set_font(s_connection_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_connection_layer, GTextAlignmentCenter);
   handle_bluetooth(connection_service_peek_pebble_app_connection());
-  
+
+  // Style the weather text
+  text_layer_set_background_color(s_weather_layer, GColorClear);
+  text_layer_set_text_color(s_weather_layer, GColorWhite);
+  text_layer_set_text_alignment(s_weather_layer, GTextAlignmentCenter);
+  text_layer_set_text(s_weather_layer, "Lade...");  
   
   // Add it as a child layer to the Window's root layer
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
@@ -102,6 +125,7 @@ static void main_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer_date));
   layer_add_child(window_layer, text_layer_get_layer(s_battery_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_connection_layer));
+  layer_add_child(window_layer, text_layer_get_layer(s_weather_layer));
 }
 
 // Update the time and date
@@ -139,9 +163,41 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_time_layer_date);
   text_layer_destroy(s_battery_layer);
   text_layer_destroy(s_connection_layer);
+  text_layer_destroy(s_weather_layer);
   fonts_unload_custom_font(s_time_font);
 }
 
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+  // Store incoming information
+  static char temperature_buffer[8];
+  static char conditions_buffer[32];
+  static char weather_layer_buffer[32];
+  
+    // Read tuples for data
+  Tuple *temp_tuple = dict_find(iterator, KEY_TEMPERATURE);
+  Tuple *conditions_tuple = dict_find(iterator, KEY_CONDITIONS);
+  
+  // If all data is available, use it
+  if(temp_tuple && conditions_tuple) {
+    snprintf(temperature_buffer, sizeof(temperature_buffer), "%d C", (int)temp_tuple->value->int32);
+    snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", conditions_tuple->value->cstring);
+  }
+  // Assemble full string and display
+  snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s, %s", temperature_buffer, conditions_buffer);
+  text_layer_set_text(s_weather_layer, weather_layer_buffer);
+}
+
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
+}
+
+static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+}
+
+static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
+}
 
 static void init() {
   // Create main Window element and assign to pointer
@@ -161,6 +217,17 @@ static void init() {
   tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
   update_time();
   battery_state_service_subscribe(handle_battery);
+  
+  // Register callbacks
+  app_message_register_inbox_received(inbox_received_callback);
+  
+  // Open AppMessage
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+  app_message_register_outbox_failed(outbox_failed_callback);
+  app_message_register_outbox_sent(outbox_sent_callback);
+  
 }
 
 static void deinit() {
