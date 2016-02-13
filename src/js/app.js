@@ -22,7 +22,7 @@ Pebble.addEventListener('appmessage',
 
 
 function getWeather() {
-  var myAPIKey = 'b3246f527ad23a5ffd2bef06841154d3';
+  var myAPIKey = '';
   // Construct URL Geo coords [ 7.75, 49.450001 ]
   var url = "http://api.openweathermap.org/data/2.5/weather?lat=49.450001&lon=7.75" + '&appid=' + myAPIKey;
 
