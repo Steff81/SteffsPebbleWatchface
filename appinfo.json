@@ -6,12 +6,19 @@
     "capabilities": [
         "location"
     ],
-    "companyName": "removed",
+    "companyName": "SteffsWatchface",
     "enableMultiJS": true,
     "longName": "SteffsWatchface",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/SteffsWatchface.png",
+                "menuIcon": true,
+                "name": "STEFFS_WATCHFACE_LOGO",
+                "targetPlatforms": null,
+                "type": "png"
+            },
             {
                 "characterRegex": "[0-9.: ]",
                 "file": "fonts/Raleway-Black.ttf",

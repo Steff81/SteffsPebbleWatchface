@@ -153,11 +153,24 @@ static void update_time() {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
+  
+  // Get weather update only every 60 minutes
+  if(tick_time->tm_min % 60 == 0) {
+    // Begin dictionary
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+  
+    // Add a key-value pair
+    dict_write_uint8(iter, 0, 0);
+  
+    // Send the message!
+    app_message_outbox_send();
+  }  
 }
 
 // free memory
 static void main_window_unload(Window *window) {
-  // Destroy TextLayer
+  // Destroy TextLayers
   text_layer_destroy(s_time_layer);
   // text_layer_destroy(s_time_layer_seconds);
   text_layer_destroy(s_time_layer_date);
@@ -172,6 +185,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   static char temperature_buffer[8];
   static char conditions_buffer[32];
   static char weather_layer_buffer[32];
+  int temperature_int = 0;
   
     // Read tuples for data
   Tuple *temp_tuple = dict_find(iterator, KEY_TEMPERATURE);
@@ -179,9 +193,23 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   
   // If all data is available, use it
   if(temp_tuple && conditions_tuple) {
-    snprintf(temperature_buffer, sizeof(temperature_buffer), "%d C", (int)temp_tuple->value->int32);
+    temperature_int =  (int)temp_tuple->value->int32;
+    snprintf(temperature_buffer, sizeof(temperature_buffer), "%d C", temperature_int);
     snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", conditions_tuple->value->cstring);
   }
+  
+  // adjust colors depending on the temperature
+  if (temperature_int < 5)
+  {
+     text_layer_set_text_color(s_weather_layer, GColorCeleste);   
+  } else if (temperature_int < 18 && temperature_int > 5) {
+     text_layer_set_text_color(s_weather_layer, GColorVividCerulean ); 
+  } else if (temperature_int > 16 && temperature_int < 26) {
+     text_layer_set_text_color(s_weather_layer, GColorChromeYellow ); 
+  } else if (temperature_int > 26 ) {
+     text_layer_set_text_color(s_weather_layer, GColorRed); 
+  }
+  
   // Assemble full string and display
   snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s, %s", temperature_buffer, conditions_buffer);
   text_layer_set_text(s_weather_layer, weather_layer_buffer);

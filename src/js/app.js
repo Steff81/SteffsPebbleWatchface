@@ -9,11 +9,22 @@ var xhrRequest = function (url, type, callback) {
   xhr.send();
 };
 
-function locationSuccess(pos) {
+
+
+// Listen for when an AppMessage is received
+Pebble.addEventListener('appmessage',
+  function(e) {
+    console.log('AppMessage received!');
+    getWeather();
+  }                     
+);
+
+
+
+function getWeather() {
   var myAPIKey = 'b3246f527ad23a5ffd2bef06841154d3';
-  // Construct URL
-  var url = "http://api.openweathermap.org/data/2.5/weather?lat=" +
-      pos.coords.latitude + "&lon=" + pos.coords.longitude + '&appid=' + myAPIKey;
+  // Construct URL Geo coords [ 7.75, 49.450001 ]
+  var url = "http://api.openweathermap.org/data/2.5/weather?lat=49.450001&lon=7.75" + '&appid=' + myAPIKey;
 
   // Send request to OpenWeatherMap
   xhrRequest(url, 'GET', 
@@ -45,26 +56,6 @@ function locationSuccess(pos) {
         }
       );
     }      
-  );
-}
-
-// Listen for when an AppMessage is received
-Pebble.addEventListener('appmessage',
-  function(e) {
-    console.log('AppMessage received!');
-    getWeather();
-  }                     
-);
-
-function locationError(err) {
-  console.log("Error requesting location!");
-}
-
-function getWeather() {
-  navigator.geolocation.getCurrentPosition(
-    locationSuccess,
-    locationError,
-    {timeout: 15000, maximumAge: 60000}
   );
 }
 
