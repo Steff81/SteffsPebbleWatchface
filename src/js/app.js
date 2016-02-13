@@ -23,7 +23,8 @@ Pebble.addEventListener('appmessage',
 
 function getWeather() {
   var myAPIKey = '';
-  // Construct URL Geo coords [ 7.75, 49.450001 ]
+  // Construct URL Geo coords [ 7.75, 49.450001 ] // Kaiserslautern, Germany area
+  // hardcoded because atm I do not want to turn on GPS constantly on my phone
   var url = "http://api.openweathermap.org/data/2.5/weather?lat=49.450001&lon=7.75" + '&appid=' + myAPIKey;
 
   // Send request to OpenWeatherMap
