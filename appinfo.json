@@ -16,7 +16,7 @@
     "resources": {
         "media": [
             {
-                "file": "images/SettingsPage",
+                "file": "images/settings_page.png",
                 "name": "IMAGE_SETTINGS_PAGE",
                 "targetPlatforms": null,
                 "type": "png"
