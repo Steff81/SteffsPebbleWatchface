@@ -1,5 +1,3 @@
-
-
 var xhrRequest = function (url, type, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
@@ -19,9 +17,37 @@ Pebble.addEventListener('appmessage',
   }                     
 );
 
+Pebble.addEventListener('showConfiguration', function(e) {
+  // Show config page
+  Pebble.openURL('http://steffenedinger.de/steffswatchfaceconfig.html');
+});
+
+Pebble.addEventListener('webviewclosed', function(e) {
+  // Decode and parse config data as JSON
+  var config_data = JSON.parse(decodeURIComponent(e.response));
+
+  console.log('Config window returned: ', JSON.stringify(config_data));
+
+   var color = config_data['color'];
+   var bgcolor = config_data['bgcolor']; 
+  
+  // Prepare AppMessage payload
+  var dict = {
+    'KEY_CLOCK_COLOR': color,
+    'KEY_BG_COLOR': bgcolor
+  };
+
+  // Send settings to Pebble watchapp
+  Pebble.sendAppMessage(dict, function(){
+    console.log('Sent config data to Pebble');  
+  }, function() {
+    console.log('Failed to send config data!');
+  });
+});
 
 
 function getWeather() {
+  // your API key from openweathermap goes here
   var myAPIKey = '';
   // Construct URL Geo coords [ 7.75, 49.450001 ] // Kaiserslautern, Germany area
   // hardcoded because atm I do not want to turn on GPS constantly on my phone

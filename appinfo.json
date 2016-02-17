@@ -1,13 +1,16 @@
 {
     "appKeys": {
+        "KEY_BG_COLOR": 3,
+        "KEY_CLOCK_COLOR": 2,
         "KEY_CONDITIONS": 1,
         "KEY_TEMPERATURE": 0
     },
     "capabilities": [
-        "location"
+        "location",
+        "configurable"
     ],
     "companyName": "SteffsWatchface",
-    "enableMultiJS": true,
+    "enableMultiJS": false,
     "longName": "SteffsWatchface",
     "projectType": "native",
     "resources": {
