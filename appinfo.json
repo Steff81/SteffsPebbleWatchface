@@ -16,6 +16,12 @@
     "resources": {
         "media": [
             {
+                "file": "images/SettingsPage",
+                "name": "IMAGE_SETTINGS_PAGE",
+                "targetPlatforms": null,
+                "type": "png"
+            },
+            {
                 "file": "images/SteffsWatchface.png",
                 "menuIcon": true,
                 "name": "STEFFS_WATCHFACE_LOGO",
