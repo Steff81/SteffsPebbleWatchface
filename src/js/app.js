@@ -7,7 +7,8 @@ var xhrRequest = function (url, type, callback) {
   xhr.send();
 };
 
-
+// your API key from openweathermap goes here
+var myAPIKey = '';
 
 // Listen for when an AppMessage is received
 Pebble.addEventListener('appmessage',
@@ -46,12 +47,11 @@ Pebble.addEventListener('webviewclosed', function(e) {
 });
 
 
-function getWeather() {
-  // your API key from openweathermap goes here
-  var myAPIKey = '';
-  // Construct URL Geo coords [ 7.75, 49.450001 ] // Kaiserslautern, Germany area
-  // hardcoded because atm I do not want to turn on GPS constantly on my phone
-  var url = "http://api.openweathermap.org/data/2.5/weather?lat=49.450001&lon=7.75" + '&appid=' + myAPIKey;
+function locationSuccess(pos) {
+
+  // Construct URL
+  var url = 'http://api.openweathermap.org/data/2.5/weather?lat=' +
+      pos.coords.latitude + '&lon=' + pos.coords.longitude + '&appid=' + myAPIKey;
 
   // Send request to OpenWeatherMap
   xhrRequest(url, 'GET', 
@@ -61,11 +61,11 @@ function getWeather() {
 
       // Temperature in Kelvin requires adjustment
       var temperature = Math.round(json.main.temp - 273.15);
-      console.log("Temperature is " + temperature);
+      console.log('Temperature is ' + temperature);
 
       // Conditions
       var conditions = json.weather[0].main;      
-      console.log("Conditions are " + conditions);
+      console.log('Conditions are ' + conditions);   
       
       // Assemble dictionary using our keys
       var dictionary = {
@@ -83,6 +83,52 @@ function getWeather() {
         }
       );
     }      
+  );
+}
+
+function locationError(err) {
+  console.log('Use Default location ');
+  // Construct URL
+  var url = "http://api.openweathermap.org/data/2.5/weather?lat=49.450001&lon=7.75" + '&appid=' + myAPIKey;
+
+  // Send request to OpenWeatherMap
+  xhrRequest(url, 'GET', 
+    function(responseText) {
+      // responseText contains a JSON object with weather info
+      var json = JSON.parse(responseText);
+
+      // Temperature in Kelvin requires adjustment
+      var temperature = Math.round(json.main.temp - 273.15);
+      console.log('Temperature is ' + temperature);
+
+      // Conditions
+      var conditions = json.weather[0].main;      
+      console.log('Conditions are ' + conditions);   
+      
+      // Assemble dictionary using our keys
+      var dictionary = {
+        "KEY_TEMPERATURE": temperature,
+        "KEY_CONDITIONS": conditions
+      };
+
+      // Send to Pebble
+      Pebble.sendAppMessage(dictionary,
+        function(e) {
+          console.log("Weather info sent to Pebble successfully!");
+        },
+        function(e) {
+          console.log("Error sending weather info to Pebble!");
+        }
+      );
+    }      
+  );
+}
+
+function getWeather() {
+  navigator.geolocation.getCurrentPosition(
+    locationSuccess,
+    locationError,
+    {timeout: 15000, maximumAge: 60000}
   );
 }
 

@@ -20,7 +20,9 @@ enum {
   KEY_TEMPERATURE = 0,
   KEY_CONDITIONS = 1,
   KEY_CLOCK_COLOR = 2,
-  KEY_BG_COLOR = 3
+  KEY_BG_COLOR = 3,
+  KEY_LAT = 4,
+  KEY_LON = 5
 };
 
 static GFont s_time_font;
@@ -61,6 +63,9 @@ void change_color() {
   }
   if (strcmp("6", color) == 0) {
     text_layer_set_text_color(s_time_layer, GColorVividViolet);
+  }   
+  if (strcmp("7", color) == 0) {
+    text_layer_set_text_color(s_time_layer, GColorBlack);
   }   
   
   char bgcolor[2];
