@@ -27,6 +27,13 @@ enum {
 
 static GFont s_time_font;
 
+static Layer *mydrawings_layer;
+      
+//---add in the following statements---
+//---represent the battery charge state---
+BatteryChargeState batteryState;
+//---end of statements to add---
+
 // Battery status handling
 static void handle_battery(BatteryChargeState charge_state) {
   static char battery_text[] = "100%";
@@ -37,7 +44,76 @@ static void handle_battery(BatteryChargeState charge_state) {
     snprintf(battery_text, sizeof(battery_text), "%d%% geladen", charge_state.charge_percent);
   }
   text_layer_set_text(s_battery_layer, battery_text);
+  layer_mark_dirty(mydrawings_layer);
 }
+
+void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
+    //---draw 2 rectangles to represent the battery---
+  
+    char color[2];
+    persist_read_string(KEY_CLOCK_COLOR, color, sizeof(color));
+  
+    if (strcmp("1", color) == 0) {
+      graphics_context_set_fill_color(ctx, GColorYellow);
+      graphics_context_set_stroke_color(ctx, GColorYellow);
+    } 
+    if (strcmp("2", color) == 0) {
+      graphics_context_set_fill_color(ctx, GColorRed);
+      graphics_context_set_stroke_color(ctx, GColorRed);
+    } 
+    if (strcmp("3", color) == 0) {
+      graphics_context_set_fill_color(ctx, GColorBlue);
+      graphics_context_set_stroke_color(ctx, GColorBlue);
+    } 
+    if (strcmp("4", color) == 0) {
+      graphics_context_set_fill_color(ctx, GColorWhite);
+      graphics_context_set_stroke_color(ctx, GColorWhite);
+    }   
+    if (strcmp("5", color) == 0) {
+      graphics_context_set_fill_color(ctx, GColorMalachite);
+      graphics_context_set_stroke_color(ctx, GColorMalachite);
+    }
+    if (strcmp("6", color) == 0) {
+      graphics_context_set_fill_color(ctx, GColorVividViolet);
+      graphics_context_set_stroke_color(ctx, GColorVividViolet);
+    }   
+    if (strcmp("7", color) == 0) {
+      graphics_context_set_fill_color(ctx, GColorBlack);
+      graphics_context_set_stroke_color(ctx, GColorBlack);
+    }    
+     
+    GRect line;
+    line.origin = GPoint(1, 50);
+    line.size = GSize(200,1);
+    graphics_draw_rect(ctx, line);
+
+    GRect line2;
+    line2.origin = GPoint(1, 105);
+    line2.size = GSize(200,1);
+    graphics_draw_rect(ctx, line2);  
+  
+    GRect rect1;
+    rect1.origin = GPoint(62,125);
+    rect1.size = GSize(54,20);
+    graphics_draw_rect(ctx, rect1);
+    
+    GRect rect2;
+    rect2.origin = GPoint(115,130);
+    rect2.size = GSize(5,10);
+    graphics_draw_rect(ctx, rect2);
+    
+    GRect rect3;
+    rect3.origin = GPoint(64,127);
+      
+    //---add in the following statements---
+    //rect3.size = GSize(50,16);
+    //---change the width of the rect to match the battery level---
+    rect3.size = GSize(batteryState.charge_percent/2, 16);
+    //---end of statements to add---
+      
+    graphics_fill_rect(ctx, rect3, 0, GCornerNone);
+}
+
 
 // change the watchfaces colors when called
 void change_color() {
@@ -76,11 +152,11 @@ void change_color() {
     // set bg color and change all text colors so they are readable
     window_set_background_color(s_main_window, GColorBlack);
     // Style the Battery text
-    text_layer_set_text_color(s_battery_layer, GColorWhite);
+    text_layer_set_text_color(s_battery_layer, GColorLightGray);
     // Style the date layer
     text_layer_set_text_color(s_time_layer_date, GColorOrange);
     // Style the weather layer
-    text_layer_set_text_color(s_weather_layer, GColorWhite);
+    text_layer_set_text_color(s_weather_layer, GColorVividCerulean);
 
   } 
   if (strcmp("2", bgcolor) == 0) {
@@ -90,7 +166,7 @@ void change_color() {
     // Style the date layer
     text_layer_set_text_color(s_time_layer_date, GColorBlue);
     // Style the weather layer
-    text_layer_set_text_color(s_weather_layer, GColorBlack); 
+    text_layer_set_text_color(s_weather_layer, GColorVividCerulean); 
   } 
 }
 
@@ -110,10 +186,21 @@ static void main_window_load(Window *window) {
   // Get information about the Window
   Layer *window_layer = window_get_root_layer(window);  
   GRect bounds = layer_get_bounds(window_layer);
-    
+     
+  //---add in the following statements---
+          //---get the charge state of the battery---
+  batteryState = battery_state_service_peek();
+  //---end of statements to add---
+
+  mydrawings_layer = layer_create(bounds);
+  layer_set_update_proc(mydrawings_layer,
+                        my_layer_update_proc);
+
+  layer_add_child(window_layer, mydrawings_layer);  
+  
   // Create the TextLayer with specific bounds
   s_time_layer = text_layer_create(
-      GRect(0, 45, bounds.size.w, 60));
+      GRect(0, 42, bounds.size.w, 60));
   
   // Create the TextLayer with specific bounds
   // s_time_layer_seconds = text_layer_create(
@@ -161,7 +248,7 @@ static void main_window_load(Window *window) {
   text_layer_set_text_alignment(s_time_layer_date, GTextAlignmentCenter);
   
   // Style the Battery text
-  text_layer_set_text_color(s_battery_layer, GColorWhite);
+  text_layer_set_text_color(s_battery_layer, GColorLightGray);
   text_layer_set_background_color(s_battery_layer, GColorClear);
   text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_battery_layer, GTextAlignmentCenter);
@@ -175,7 +262,7 @@ static void main_window_load(Window *window) {
 
   // Style the weather text
   text_layer_set_background_color(s_weather_layer, GColorClear);
-  text_layer_set_text_color(s_weather_layer, GColorWhite);
+  text_layer_set_text_color(s_weather_layer, GColorVividCerulean);
   text_layer_set_text_alignment(s_weather_layer, GTextAlignmentCenter);
   text_layer_set_text(s_weather_layer, "Lade...");  
   
@@ -243,6 +330,7 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_battery_layer);
   text_layer_destroy(s_connection_layer);
   text_layer_destroy(s_weather_layer);
+  layer_destroy(mydrawings_layer);
   fonts_unload_custom_font(s_time_font);
 }
 
@@ -284,18 +372,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }  
   // call the color change method
   change_color(); 
-  
-  // adjust colors depending on the temperature
-  if (temperature_int < 5)
-  {
-     text_layer_set_text_color(s_weather_layer, GColorVividCerulean);   
-  } else if (temperature_int < 18 && temperature_int > 5) {
-     text_layer_set_text_color(s_weather_layer, GColorElectricUltramarine); 
-  } else if (temperature_int > 16 && temperature_int < 26) {
-     text_layer_set_text_color(s_weather_layer, GColorChromeYellow ); 
-  } else if (temperature_int > 26 ) {
-     text_layer_set_text_color(s_weather_layer, GColorRed); 
-  }
   
   // Assemble full string and display
   snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s, %s", temperature_buffer, conditions_buffer);

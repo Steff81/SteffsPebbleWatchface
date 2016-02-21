@@ -16,15 +16,14 @@
     "resources": {
         "media": [
             {
-                "file": "images/settings_page.png",
-                "name": "IMAGE_SETTINGS_PAGE",
+                "file": "images/SteffsWatchFace.png",
+                "name": "STEFFS_WATCHFACE_NEW",
                 "targetPlatforms": null,
                 "type": "png"
             },
             {
-                "file": "images/SteffsWatchface.png",
-                "menuIcon": true,
-                "name": "STEFFS_WATCHFACE_LOGO",
+                "file": "images/settings_page.png",
+                "name": "IMAGE_SETTINGS_PAGE",
                 "targetPlatforms": null,
                 "type": "png"
             },
